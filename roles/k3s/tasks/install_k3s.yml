@@ -1,0 +1,39 @@
+---
+- name: Install K3s on master nodes
+  hosts: k3s_master
+  become: yes
+  tasks:
+    - name: Install K3s with embedded etcd (first master node)
+      shell: |
+        curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server --cluster-init" sh -
+      args:
+        creates: /etc/rancher/k3s/k3s.yaml
+      when: inventory_hostname == "k3s-master1"
+
+    - name: Install K3s and join etcd cluster (additional master nodes)
+      shell: |
+        curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server --server https://{{ hostvars['k3s-master1']['ansible_host'] }}:6443" sh -
+      args:
+        creates: /etc/rancher/k3s/k3s.yaml
+      when: inventory_hostname == "k3s-master2"
+
+    - name: Get K3s token
+      shell: cat /var/lib/rancher/k3s/server/node-token
+      register: k3s_token
+      changed_when: false
+      when: inventory_hostname == "k3s-master1"
+
+    - name: Save K3s token
+      set_fact:
+        k3s_token_value: "{{ k3s_token.stdout }}"
+      when: inventory_hostname == "k3s-master1"
+
+- name: Install K3s on worker nodes
+  hosts: k3s_workers
+  become: yes
+  tasks:
+    - name: Install K3s on worker nodes
+      shell: |
+        curl -sfL https://get.k3s.io | K3S_URL="https://{{ hostvars['k3s-master1']['ansible_host'] }}:6443" K3S_TOKEN="{{ hostvars['k3s-master1']['k3s_token_value'] }}" sh -
+      args:
+        creates: /etc/rancher/k3s/k3s.yaml

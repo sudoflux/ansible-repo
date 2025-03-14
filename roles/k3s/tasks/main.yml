@@ -1,0 +1,13 @@
+---
+- name: Install K3s on Master
+  shell: curl -sfL {{ k3s_install_url }} | sh -
+  when: "'pve1' in inventory_hostname"
+
+- name: Get K3s Token from Master
+  shell: cat /var/lib/rancher/k3s/server/node-token
+  register: k3s_token
+  when: "'pve1' in inventory_hostname"
+
+- name: Install K3s on Workers
+  shell: curl -sfL {{ k3s_install_url }} | K3S_URL="https://{{ k3s_master_ip }}:6443" K3S_TOKEN="{{ k3s_token.stdout }}" sh -
+  when: "'pve1' not in inventory_hostname"

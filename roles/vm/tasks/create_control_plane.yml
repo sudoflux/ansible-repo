@@ -1,0 +1,49 @@
+---
+- name: Create K3s Master VMs
+  hosts: localhost
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: Create K3s Master VM 1
+      community.general.proxmox_kvm:
+        api_host: "pve1"
+        api_user: "root@pam"
+        api_password: "{{ proxmox_api_password }}"
+        node: "pve1"
+        vmid: 200
+        name: "k3s-master1"
+        cores: 4
+        memory: 8192
+        sockets: 1
+        scsihw: "virtio-scsi-pci"  # Use SCSI controller
+        ostype: "l26"
+        boot: "order=scsi0"  # Ensure disk boots first
+        scsi:
+          scsi0: "pve1-zfs:50,format=raw"  # SCSI disk instead of VirtIO
+        net:
+          net0: "virtio,bridge=vmbr0"
+        ide:
+          ide2: "local:iso/ubuntu-22.04.5-live-server-amd64.iso,media=cdrom"  # Mount ISO for install
+        state: present
+
+    - name: Create K3s Master VM 2
+      community.general.proxmox_kvm:
+        api_host: "pve1"
+        api_user: "root@pam"
+        api_password: "{{ proxmox_api_password }}"
+        node: "pve1"
+        vmid: 201
+        name: "k3s-master2"
+        cores: 4
+        memory: 8192
+        sockets: 1
+        scsihw: "virtio-scsi-pci"
+        ostype: "l26"
+        boot: "order=scsi0"
+        scsi:
+          scsi0: "pve1-zfs:50,format=raw"
+        net:
+          net0: "virtio,bridge=vmbr0"
+        ide:
+          ide2: "local:iso/ubuntu-22.04.5-live-server-amd64.iso,media=cdrom"
+        state: present

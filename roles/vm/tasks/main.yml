@@ -1,0 +1,40 @@
+---
+- name: Create K3s Master and Worker VMs
+  hosts: localhost
+  tasks:
+
+    - name: Create K3s Master VM
+      proxmox_kvm:
+        api_host: "pve1"
+        api_user: "root@pam"
+        api_password: "{{ vault_proxmox_password }}"
+        node: "pve1"
+        vmid: 200
+        name: "k3s-master1"
+        cores: 4
+        memory: 8192
+        disk:
+          - storage: "rpool"        # ← Stores VM disk on ZFS rpool/data
+            size: "50G"
+            format: "raw"           # ← Using raw ZFS volumes
+            type: "virtio"
+        os_type: "cloud-init"
+        iso: "local:iso/ubuntu-22.04.5-live-server-amd64.iso"
+
+    - name: Create K3s Worker VM
+      proxmox_kvm:
+        api_host: "pve1"
+        api_user: "root@pam"
+        api_password: "{{ vault_proxmox_password }}"
+        node: "pve1"
+        vmid: 201
+        name: "k3s-worker1"
+        cores: 2
+        memory: 4096
+        disk:
+          - storage: "nvme1"        # ← Using NVMe for Longhorn storage
+            size: "100G"
+            format: "raw"
+            type: "virtio"
+        os_type: "cloud-init"
+        iso: "local:iso/ubuntu-22.04.5-live-server-amd64.iso"
