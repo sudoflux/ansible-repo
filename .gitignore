@@ -1,0 +1,16 @@
+venv/
+# Ignore encrypted files or secret keys
+*.key
+*.pem
+*.enc
+.env
+secrets/
+
+# Ignore any backup or temporary files
+*~
+*.bak
+*.swp
+
+# Ignore logs and database files
+*.log
+*.db
